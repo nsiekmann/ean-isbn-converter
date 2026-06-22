@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ISBN Converter</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f7f6f3;
+    --surface: #ffffff;
+    --surface2: #f0efe9;
+    --border: #e0ddd5;
+    --border2: #c8c5bc;
+    --text: #1a1916;
+    --text2: #6b6860;
+    --text3: #9b9890;
+    --accent: #2c5282;
+    --accent-bg: #ebf0f8;
+    --accent-border: #b8cce4;
+    --success: #276749;
+    --success-bg: #ebf5f0;
+    --error: #9b2c2c;
+    --error-bg: #fff5f5;
+    --mono: 'Courier New', monospace;
+    --radius: 8px;
+    --radius-lg: 12px;
+  }
+
+  body {
+    font-family: Georgia, 'Times New Roman', serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 1.25rem 2rem;
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+  }
+
+  header h1 {
+    font-size: 1.25rem;
+    font-weight: normal;
+    letter-spacing: -0.01em;
+    color: var(--text);
+  }
+
+  header span {
+    font-size: 0.8rem;
+    color: var(--text3);
+    font-family: sans-serif;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .container {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+  }
+
+  .mode-bar {
+    display: flex;
+    gap: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-bottom: 1.75rem;
+  }
+
+  .mode-btn {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-family: sans-serif;
+    font-size: 0.85rem;
+    color: var(--text2);
+    border-right: 1px solid var(--border);
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .mode-btn:last-child { border-right: none; }
+
+  .mode-btn.active {
+    background: var(--accent-bg);
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .card-title {
+    font-family: sans-serif;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 1rem;
+  }
+
+  .input-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 1.25rem;
+  }
+
+  .input-tab {
+    padding: 0.5rem 1rem;
+    font-family: sans-serif;
+    font-size: 0.85rem;
+    color: var(--text2);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    margin-bottom: -1px;
+  }
+
+  .input-tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    font-weight: 600;
+  }
+
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  .drop-zone {
+    border: 1.5px dashed var(--border2);
+    border-radius: var(--radius);
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    background: var(--bg);
+  }
+
+  .drop-zone:hover, .drop-zone.drag-over {
+    border-color: var(--accent);
+    background: var(--accent-bg);
+  }
+
+  .drop-zone svg {
+    display: block;
+    margin: 0 auto 0.75rem;
+    opacity: 0.4;
+  }
+
+  .drop-zone p {
+    font-family: sans-serif;
+    font-size: 0.9rem;
+    color: var(--text2);
+    margin-bottom: 0.25rem;
+  }
+
+  .drop-zone small {
+    font-family: sans-serif;
+    font-size: 0.75rem;
+    color: var(--text3);
+  }
+
+  .drop-zone input[type=file] { display: none; }
+
+  .file-loaded {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: var(--success-bg);
+    border: 1px solid #b2dfcc;
+    border-radius: var(--radius);
+    font-family: sans-serif;
+    font-size: 0.85rem;
+    color: var(--success);
+  }
+
+  .file-loaded button {
+    margin-left: auto;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text3);
+    font-size: 1rem;
+    padding: 0 4px;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 130px;
+    resize: vertical;
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    line-height: 1.7;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg);
+    color: var(--text);
+    outline: none;
+  }
+
+  textarea:focus { border-color: var(--accent); }
+
+  .hint {
+    font-family: sans-serif;
+    font-size: 0.75rem;
+    color: var(--text3);
+    margin-top: 0.5rem;
+  }
+
+  .convert-btn {
+    width: 100%;
+    padding: 0.8rem;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: var(--radius);
+    font-family: sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 1rem;
+    transition: opacity 0.15s;
+    letter-spacing: 0.01em;
+  }
+
+  .convert-btn:hover { opacity: 0.88; }
+  .convert-btn:active { opacity: 0.75; }
+
+  .results-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .results-header h2 {
+    font-family: sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .badge {
+    font-family: sans-serif;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: var(--accent-bg);
+    color: var(--accent);
+    border: 1px solid var(--accent-border);
+  }
+
+  .badge.error {
+    background: var(--error-bg);
+    color: var(--error);
+    border-color: #f5c6c6;
+  }
+
+  .action-btns {
+    display: flex;
+    gap: 0.5rem;
+    margin-left: auto;
+  }
+
+  .action-btn {
+    font-family: sans-serif;
+    font-size: 0.78rem;
+    padding: 5px 12px;
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text2);
+    cursor: pointer;
+    transition: background 0.12s;
+  }
+
+  .action-btn:hover { background: var(--surface2); }
+
+  .results-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+  }
+
+  .results-table th {
+    font-family: sans-serif;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text3);
+    text-align: left;
+    padding: 0 0.75rem 0.6rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .results-table td {
+    padding: 0.45rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: middle;
+  }
+
+  .results-table tr:last-child td { border-bottom: none; }
+  .results-table tr:hover td { background: var(--bg); }
+
+  .result-ok { color: var(--text); }
+  .result-err { color: var(--error); font-family: sans-serif; font-size: 0.75rem; font-style: italic; }
+  .original-val { color: var(--text2); }
+
+  .arrow { color: var(--text3); padding: 0 0.25rem; }
+
+  #results-section { display: none; }
+
+  .format-note {
+    font-family: sans-serif;
+    font-size: 0.75rem;
+    color: var(--text3);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.6rem 0.9rem;
+    margin-bottom: 1rem;
+    line-height: 1.6;
+  }
+
+  .format-note strong { color: var(--text2); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>ISBN Converter</h1>
+  <span>ISBN-10 ↔ ISBN-13</span>
+</header>
+
+<div class="container">
+
+  <div class="mode-bar">
+    <button class="mode-btn active" id="btn-10to13" onclick="setMode('10to13')">ISBN-10 → ISBN-13</button>
+    <button class="mode-btn" id="btn-13to10" onclick="setMode('13to10')">ISBN-13 → ISBN-10</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Input</div>
+
+    <div class="input-tabs">
+      <button class="input-tab active" onclick="setTab('file')">Upload file</button>
+      <button class="input-tab" onclick="setTab('paste')">Paste ISBNs</button>
+    </div>
+
+    <div class="tab-pane active" id="tab-file">
+      <div class="format-note">
+        <strong>Auto-detects format:</strong> tab-delimited files with EAN &amp; ISBN columns (EAN column will be populated), or plain text files with one ISBN per line.
+      </div>
+      <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        <p>Click to choose a file, or drag and drop</p>
+        <small>Accepts .txt, .tsv, .csv files</small>
+        <input type="file" id="file-input" accept=".txt,.tsv,.csv" onchange="onFileSelected(event)">
+      </div>
+      <div class="file-loaded" id="file-loaded" style="display:none;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        <span id="file-name"></span>
+        <span id="file-rows" style="color:var(--text3); margin-left:4px;"></span>
+        <button onclick="clearFile()" title="Remove file">✕</button>
+      </div>
+    </div>
+
+    <div class="tab-pane" id="tab-paste">
+      <textarea id="paste-input" placeholder="0596009208&#10;0-134-68599-7&#10;0262033844" oninput="clearResults()"></textarea>
+      <p class="hint">One ISBN per line. Hyphens are fine.</p>
+    </div>
+
+    <button class="convert-btn" onclick="convert()">Convert</button>
+  </div>
+
+  <div class="card" id="results-section">
+    <div class="results-header">
+      <h2>Results</h2>
+      <span class="badge" id="badge-ok"></span>
+      <span class="badge error" id="badge-err" style="display:none;"></span>
+      <div class="action-btns">
+        <button class="action-btn" id="btn-download" onclick="downloadResult()" style="display:none;">⬇ Download file</button>
+        <button class="action-btn" onclick="copyResults()">Copy converted</button>
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="results-table" id="results-table">
+        <thead>
+          <tr>
+            <th>Original</th>
+            <th></th>
+            <th>Converted</th>
+          </tr>
+        </thead>
+        <tbody id="results-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let mode = '10to13';
+  let activeTab = 'file';
+  let loadedFile = null;
+  let loadedFileContent = null;
+  let lastResults = [];
+  let isTabDelimited = false;
+
+  function setMode(m) {
+    mode = m;
+    document.getElementById('btn-10to13').classList.toggle('active', m === '10to13');
+    document.getElementById('btn-13to10').classList.toggle('active', m === '13to10');
+    clearResults();
+  }
+
+  function setTab(t) {
+    activeTab = t;
+    document.querySelectorAll('.input-tab').forEach((b, i) => b.classList.toggle('active', (i === 0 && t === 'file') || (i === 1 && t === 'paste')));
+    document.getElementById('tab-file').classList.toggle('active', t === 'file');
+    document.getElementById('tab-paste').classList.toggle('active', t === 'paste');
+    clearResults();
+  }
+
+  function clean(isbn) { return isbn.replace(/[-\s]/g, ''); }
+
+  function isbn10to13(isbn10) {
+    const c = clean(isbn10);
+    if (c.length !== 10) return null;
+    const base9 = c.slice(0, 9);
+    if (!/^\d{9}$/.test(base9)) return null;
+    const base = '978' + base9;
+    let sum = 0;
+    for (let i = 0; i < base.length; i++) sum += parseInt(base[i]) * (i % 2 === 0 ? 1 : 3);
+    const check = (10 - (sum % 10)) % 10;
+    return base + check;
+  }
+
+  function isbn13to10(isbn13) {
+    const c = clean(isbn13);
+    if (c.length !== 13) return null;
+    if (!c.startsWith('978')) return null;
+    if (!/^\d{13}$/.test(c)) return null;
+    const base9 = c.slice(3, 12);
+    let sum = 0;
+    for (let i = 0; i < 9; i++) sum += parseInt(base9[i]) * (10 - i);
+    const check = (11 - (sum % 11)) % 11;
+    return check === 10 ? base9 + 'X' : base9 + check;
+  }
+
+  function convertOne(isbn) {
+    return mode === '10to13' ? isbn10to13(isbn) : isbn13to10(isbn);
+  }
+
+  function detectTabDelimited(content) {
+    const firstLine = content.split('\n')[0];
+    return firstLine.includes('\t') && firstLine.toLowerCase().includes('isbn');
+  }
+
+  function findColumns(headerLine) {
+    const cols = headerLine.split('\t').map(c => c.trim().toLowerCase());
+    const eanIdx = cols.findIndex(c => c === 'ean');
+    const isbnIdx = cols.findIndex(c => c === 'isbn');
+    return { eanIdx, isbnIdx };
+  }
+
+  function onFileSelected(e) { handleFile(e.target.files[0]); }
+  function onDragOver(e) { e.preventDefault(); document.getElementById('drop-zone').classList.add('drag-over'); }
+  function onDragLeave(e) { document.getElementById('drop-zone').classList.remove('drag-over'); }
+  function onDrop(e) {
+    e.preventDefault();
+    document.getElementById('drop-zone').classList.remove('drag-over');
+    if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+  }
+
+  function handleFile(file) {
+    if (!file) return;
+    loadedFile = file;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      loadedFileContent = e.target.result;
+      const lines = loadedFileContent.split('\n').filter(l => l.trim());
+      document.getElementById('drop-zone').style.display = 'none';
+      document.getElementById('file-loaded').style.display = 'flex';
+      document.getElementById('file-name').textContent = file.name;
+      const dataRows = detectTabDelimited(loadedFileContent) ? lines.length - 1 : lines.length;
+      document.getElementById('file-rows').textContent = '(' + dataRows + ' rows)';
+      clearResults();
+    };
+    reader.readAsText(file);
+  }
+
+  function clearFile() {
+    loadedFile = null;
+    loadedFileContent = null;
+    document.getElementById('drop-zone').style.display = '';
+    document.getElementById('file-loaded').style.display = 'none';
+    document.getElementById('file-name').textContent = '';
+    document.getElementById('file-input').value = '';
+    clearResults();
+  }
+
+  function clearResults() {
+    document.getElementById('results-section').style.display = 'none';
+    lastResults = [];
+  }
+
+  function convert() {
+    if (activeTab === 'file') {
+      if (!loadedFileContent) { alert('Please upload a file first.'); return; }
+      convertFile();
+    } else {
+      convertPaste();
+    }
+  }
+
+  function convertFile() {
+    const content = loadedFileContent;
+    isTabDelimited = detectTabDelimited(content);
+
+    if (isTabDelimited) {
+      const lines = content.split('\n');
+      const header = lines[0];
+      const { eanIdx, isbnIdx } = findColumns(header);
+      if (isbnIdx === -1) { alert('Could not find an ISBN column in the file header.'); return; }
+      lastResults = [];
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i];
+        if (!line.trim()) continue;
+        const cols = line.split('\t');
+        const isbn = cols[isbnIdx] ? cols[isbnIdx].trim() : '';
+        const converted = isbn ? convertOne(isbn) : null;
+        lastResults.push({ original: isbn, result: converted, cols, eanIdx, rowIndex: i });
+      }
+    } else {
+      const lines = content.split('\n');
+      lastResults = [];
+      lines.forEach(line => {
+        const isbn = line.trim();
+        if (!isbn) return;
+        lastResults.push({ original: isbn, result: convertOne(isbn) });
+      });
+    }
+
+    renderResults();
+  }
+
+  function convertPaste() {
+    isTabDelimited = false;
+    const raw = document.getElementById('paste-input').value.trim();
+    if (!raw) { alert('Please paste some ISBNs first.'); return; }
+    const lines = raw.split('\n').map(l => l.trim()).filter(l => l);
+    lastResults = lines.map(isbn => ({ original: isbn, result: convertOne(isbn) }));
+    renderResults();
+  }
+
+  function renderResults() {
+    const ok = lastResults.filter(r => r.result);
+    const bad = lastResults.filter(r => !r.result);
+
+    document.getElementById('badge-ok').textContent = ok.length + ' converted';
+    const errBadge = document.getElementById('badge-err');
+    if (bad.length > 0) {
+      errBadge.textContent = bad.length + ' skipped';
+      errBadge.style.display = '';
+    } else {
+      errBadge.style.display = 'none';
+    }
+
+    const tbody = document.getElementById('results-body');
+    tbody.innerHTML = lastResults.map(r => {
+      if (r.result) {
+        return `<tr><td class="original-val">${r.original}</td><td class="arrow">→</td><td class="result-ok">${r.result}</td></tr>`;
+      } else {
+        return `<tr><td class="original-val">${r.original || '(empty)'}</td><td class="arrow">→</td><td class="result-err">Invalid — skipped</td></tr>`;
+      }
+    }).join('');
+
+    document.getElementById('btn-download').style.display = (loadedFile && activeTab === 'file') ? '' : 'none';
+    document.getElementById('results-section').style.display = '';
+  }
+
+  function copyResults() {
+    const text = lastResults.filter(r => r.result).map(r => r.result).join('\n');
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.querySelector('.action-btn:last-child');
+      const orig = btn.textContent;
+      btn.textContent = '✓ Copied!';
+      setTimeout(() => btn.textContent = orig, 1500);
+    });
+  }
+
+  function downloadResult() {
+    let output = '';
+    const fname = loadedFile ? loadedFile.name.replace(/\.[^.]+$/, '') + '_converted.txt' : 'isbn_converted.txt';
+
+    if (isTabDelimited) {
+      const lines = loadedFileContent.split('\n');
+      const outputLines = [lines[0]];
+      lastResults.forEach(r => {
+        const cols = [...r.cols];
+        if (r.result && r.eanIdx >= 0) cols[r.eanIdx] = r.result;
+        outputLines.push(cols.join('\t'));
+      });
+      output = outputLines.join('\n');
+    } else {
+      output = lastResults.filter(r => r.result).map(r => r.result).join('\n');
+    }
+
+    const blob = new Blob([output], { type: 'text/plain' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = fname;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+</script>
+</body>
+</html>
