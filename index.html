@@ -355,14 +355,18 @@ function renderResults() {
     errBadge.style.display = 'none';
   }
 
+  var maxDisplay = (activeTab === 'file') ? 100 : lastResults.length;
   var rows = '';
-  for (var j = 0; j < lastResults.length; j++) {
+  for (var j = 0; j < Math.min(lastResults.length, maxDisplay); j++) {
     var r = lastResults[j];
     if (r.result) {
       rows += '<tr><td class="original-val">' + r.original + '</td><td class="arrow-cell">&rarr;</td><td>' + r.result + '</td></tr>';
     } else {
       rows += '<tr><td class="original-val">' + (r.original || '(empty)') + '</td><td class="arrow-cell">&rarr;</td><td class="result-err">Invalid &mdash; skipped</td></tr>';
     }
+  }
+  if (activeTab === 'file' && lastResults.length > 100) {
+    rows += '<tr><td colspan="3" style="text-align:center; font-family:sans-serif; font-size:0.8rem; color:var(--text3); padding:0.75rem; font-style:italic;">Showing first 100 of ' + lastResults.length + ' rows &mdash; download the file for all results</td></tr>';
   }
   document.getElementById('results-body').innerHTML = rows;
   document.getElementById('btn-download').style.display = (loadedFile && activeTab === 'file') ? 'block' : 'none';
