@@ -358,7 +358,7 @@ function renderResults() {
   }
   document.getElementById('results-body').innerHTML = rows;
   document.getElementById('btn-download').style.display = (loadedFile && activeTab === 'file') ? '' : 'none';
-  document.getElementById('results-section').style.display = '';
+  document.getElementById('results-section').style.display = 'block';
 }
 
 function copyResults() {
