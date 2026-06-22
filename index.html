@@ -357,8 +357,13 @@ function renderResults() {
     }
   }
   document.getElementById('results-body').innerHTML = rows;
-  document.getElementById('btn-download').style.display = (loadedFile && activeTab === 'file') ? '' : 'none';
-  document.getElementById('results-section').style.display = 'block';
+  document.getElementById('btn-download').style.display = (loadedFile && activeTab === 'file') ? 'block' : 'none';
+  var rs = document.getElementById('results-section');
+  rs.style.display = 'block';
+  rs.style.visibility = 'visible';
+  rs.style.opacity = '1';
+  rs.style.position = 'relative';
+  rs.style.zIndex = '9999';
 }
 
 function copyResults() {
