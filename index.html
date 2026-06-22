@@ -270,12 +270,20 @@ function clearResults() {
 
 function convert() {
   hideError();
-  if (activeTab === 'file') {
-    if (!loadedFileContent) { showError('Please upload a file first.'); return; }
-    convertFile();
-  } else {
-    convertPaste();
-  }
+  var btn = document.querySelector('.convert-btn');
+  btn.disabled = true;
+  btn.textContent = 'Converting...';
+  setTimeout(function() {
+    if (activeTab === 'file') {
+      if (!loadedFileContent) { showError('Please upload a file first.'); btn.disabled = false; btn.textContent = 'Convert'; return; }
+      convertFile();
+    } else {
+      convertPaste();
+    }
+    btn.disabled = false;
+    btn.textContent = 'Convert';
+    document.getElementById('results-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 50);
 }
 
 function convertFile() {
@@ -358,12 +366,7 @@ function renderResults() {
   }
   document.getElementById('results-body').innerHTML = rows;
   document.getElementById('btn-download').style.display = (loadedFile && activeTab === 'file') ? 'block' : 'none';
-  var rs = document.getElementById('results-section');
-  rs.style.display = 'block';
-  rs.style.visibility = 'visible';
-  rs.style.opacity = '1';
-  rs.style.position = 'relative';
-  rs.style.zIndex = '9999';
+  var rs = document.getElementById('results-section'); rs.style.display = 'block'; rs.style.visibility = 'visible'; rs.style.opacity = '1'; rs.style.position = 'relative'; rs.style.zIndex = '9999';
 }
 
 function copyResults() {
